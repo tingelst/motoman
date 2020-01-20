@@ -40,3 +40,4 @@ motoman_driver/MotoPlus/_buildLog/MotoROSYRC1000.log
 motoman_driver/MotoPlus/_buildLog/MotoROSYRC1000u.log
 *.cache
 *.user
+motoman_gp25_support/.vscode/settings.json
