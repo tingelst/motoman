@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
-<?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
-<package format="2">
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>motoman_driver</name>
-  <version>0.3.5</version>
+  <version>2.0.0</version>
   <description>ROS-Industrial nodes for interfacing with Yaskawa Motoman robot controllers.</description>
   <author>Jeremy Zoss (Southwest Research Institute)</author>
   <author>Ted Miller (MotoROS) (Yaskawa Motoman)</author>
@@ -10,28 +10,34 @@
   <maintainer email="jeremy.zoss@swri.org">Jeremy Zoss (Southwest Research Institute)</maintainer>
   <maintainer email="shaun.edwards@gmail.com">Shaun Edwards</maintainer>
   <maintainer email="g.a.vanderhoorn@tudelft.nl">G.A. vd. Hoorn (TU Delft Robotics Institute)</maintainer>
+  <maintainer email="lars.tingelstad@ntnu.no">Lars Tingelstad (NTNU)</maintainer>
   <license>BSD</license>
 
   <url type="website">http://wiki.ros.org/motoman_driver</url>
   <url type="bugtracker">https://github.com/ros-industrial/motoman/issues</url>
   <url type="repository">https://github.com/ros-industrial/motoman</url>
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>ament_cmake_ros</buildtool_depend>
 
-  <test_depend>roslint</test_depend>
-
-  <depend>actionlib</depend>
-  <depend>actionlib_msgs</depend>
-  <depend>control_msgs</depend>
-  <depend>industrial_msgs</depend>
-  <depend>industrial_robot_client</depend>
-  <depend>industrial_utils</depend>
-  <depend>motoman_msgs</depend>
-  <depend>roscpp</depend>
-  <depend>sensor_msgs</depend>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+  
+  <!-- <depend>actionlib</depend> -->
+  <!-- <depend>actionlib_msgs</depend> -->
+  <!-- <depend>control_msgs</depend> -->
+  <!-- <depend>industrial_msgs</depend> -->
+  <!-- <depend>industrial_robot_client</depend> -->
+  <!-- <depend>industrial_utils</depend> -->
+  <!-- <depend>motoman_msgs</depend> -->
+  <!-- <depend>roscpp</depend> -->
+  <!-- <depend>sensor_msgs</depend> -->
   <depend>simple_message</depend>
-  <depend>std_msgs</depend>
-  <depend>std_srvs</depend>
-  <depend>trajectory_msgs</depend>
-  <depend>urdf</depend>
+  <!-- <depend>std_msgs</depend> -->
+  <!-- <depend>std_srvs</depend> -->
+  <!-- <depend>trajectory_msgs</depend> -->
+  <!-- <depend>urdf</depend> -->
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>

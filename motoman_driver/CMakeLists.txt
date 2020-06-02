@@ -1,226 +1,76 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(motoman_driver)
 
-# Load catkin and all dependencies required for this package
-find_package(
-  catkin
-  REQUIRED COMPONENTS
-    actionlib
-    actionlib_msgs
-    control_msgs
-    industrial_msgs
-    industrial_robot_client
-    industrial_utils
-    motoman_msgs
-    roscpp
-    sensor_msgs
-    simple_message
-    std_msgs
-    std_srvs
-    trajectory_msgs
-    urdf
-)
+# Default to C99
+if(NOT CMAKE_C_STANDARD)
+  set(CMAKE_C_STANDARD 99)
+endif()
 
-find_package(Boost REQUIRED COMPONENTS system thread)
+# Default to C++14
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+endif()
 
-#######################################
-## Adding directories and definitions #
-#######################################
-include_directories(
-  include
-  ${Boost_INCLUDE_DIRS}
-  ${catkin_INCLUDE_DIRS})
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+
+# find dependencies
+find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_ros REQUIRED)
+find_package(simple_message REQUIRED)
+# uncomment the following section in order to fill in further dependencies
+# manually. find_package(<dependency> REQUIRED)
 
 add_definitions(-DLINUXSOCKETS=1)  #use linux sockets for communication
 add_definitions(-DROS=1)
 
-catkin_package(
-  CATKIN_DEPENDS
-    actionlib
-    actionlib_msgs
-    control_msgs
-    industrial_msgs
-    industrial_robot_client
-    industrial_utils
-    motoman_msgs
-    roscpp
-    sensor_msgs
-    simple_message
-    std_msgs
-    std_srvs
-    trajectory_msgs
-    urdf
-  INCLUDE_DIRS
-    include
-)
-
-
 set(MSG_SRC_FILES
-  src/simple_message/messages/motoman_read_single_io_message.cpp
-  src/simple_message/messages/motoman_read_single_io_reply_message.cpp
-  src/simple_message/messages/motoman_write_single_io_message.cpp
-  src/simple_message/messages/motoman_write_single_io_reply_message.cpp
-  src/simple_message/motoman_motion_ctrl.cpp
-  src/simple_message/motoman_motion_ctrl_message.cpp
-  src/simple_message/motoman_motion_reply.cpp
-  src/simple_message/motoman_motion_reply_message.cpp
-  src/simple_message/motoman_read_single_io.cpp
-  src/simple_message/motoman_read_single_io_reply.cpp
-  src/simple_message/motoman_write_single_io.cpp
-  src/simple_message/motoman_write_single_io_reply.cpp
-)
+    src/simple_message/messages/motoman_read_single_io_message.cpp
+    src/simple_message/messages/motoman_read_single_io_reply_message.cpp
+    src/simple_message/messages/motoman_write_single_io_message.cpp
+    src/simple_message/messages/motoman_write_single_io_reply_message.cpp
+    src/simple_message/motoman_motion_ctrl.cpp
+    src/simple_message/motoman_motion_ctrl_message.cpp
+    src/simple_message/motoman_motion_reply.cpp
+    src/simple_message/motoman_motion_reply_message.cpp
+    src/simple_message/motoman_read_single_io.cpp
+    src/simple_message/motoman_read_single_io_reply.cpp
+    src/simple_message/motoman_write_single_io.cpp
+    src/simple_message/motoman_write_single_io_reply.cpp
+    )
 
-set(CLIENT_SRC_FILES
-  src/industrial_robot_client/joint_feedback_ex_relay_handler.cpp
-  src/industrial_robot_client/joint_feedback_relay_handler.cpp
-  src/industrial_robot_client/joint_relay_handler.cpp
-  src/industrial_robot_client/joint_trajectory_interface.cpp
-  src/industrial_robot_client/joint_trajectory_streamer.cpp
-  src/industrial_robot_client/motoman_utils.cpp
-  src/industrial_robot_client/robot_state_interface.cpp
-  src/simple_message/joint_feedback_ex.cpp
-  src/simple_message/joint_traj_pt_full_ex.cpp
-  src/simple_message/messages/joint_feedback_ex_message.cpp
-  src/simple_message/messages/joint_traj_pt_full_ex_message.cpp
-)
-
-
-###########
-## Build ##
-###########
-
-#-------------------------------------------------------------
-# dx100 uses same byte-ordering as most i386-based PCs
-
-# Simple message library
 add_library(motoman_simple_message ${MSG_SRC_FILES})
-target_link_libraries(motoman_simple_message
-  simple_message)
-
-# Industrial client library
-add_library(motoman_industrial_robot_client ${CLIENT_SRC_FILES})
-target_link_libraries(motoman_industrial_robot_client
-  industrial_robot_client
-  industrial_utils)
-add_dependencies(motoman_industrial_robot_client ${catkin_EXPORTED_TARGETS})
-
-# Robot state node
-add_executable(motoman_robot_state
-  src/robot_state_node.cpp)
-target_link_libraries(motoman_robot_state
+target_include_directories(
   motoman_simple_message
-  motoman_industrial_robot_client
-  ${catkin_LIBRARIES})
-set_target_properties(motoman_robot_state
-  PROPERTIES OUTPUT_NAME robot_state
-  PREFIX "")
+  PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+         $<INSTALL_INTERFACE:include>)
+ament_target_dependencies(motoman_simple_message "simple_message")
 
-# Motion streaming node
-add_executable(motoman_motion_streaming_interface
-  src/joint_streaming_node.cpp
-  src/joint_trajectory_streamer.cpp
-  src/motion_ctrl.cpp)
-target_link_libraries(motoman_motion_streaming_interface
-  motoman_simple_message
-  motoman_industrial_robot_client
-  ${catkin_LIBRARIES})
-set_target_properties(motoman_motion_streaming_interface
-  PROPERTIES OUTPUT_NAME motion_streaming_interface
-  PREFIX "")
+# Causes the visibility macros to use dllexport rather than dllimport, which is
+# appropriate when building the dll but not consuming it.
+target_compile_definitions(motoman_simple_message PRIVATE
+                           "MOTOMAN_DRIVER_BUILDING_LIBRARY")
 
+install(DIRECTORY include/ DESTINATION include)
+install(TARGETS motoman_simple_message
+        EXPORT export_${PROJECT_NAME}
+        ARCHIVE DESTINATION lib
+        LIBRARY DESTINATION lib
+        RUNTIME DESTINATION bin)
 
-#----------------------------------------------------------------
-# FS100 uses opposite byte-ordering from most i386-based PCs
-# Simple message library
-add_library(motoman_simple_message_bswap ${MSG_SRC_FILES})
-set_target_properties(motoman_simple_message_bswap PROPERTIES COMPILE_DEFINITIONS "BYTE_SWAPPING")
-target_link_libraries(motoman_simple_message_bswap
-  simple_message_bswap)
-
-# Industrial client library
-add_library(motoman_industrial_robot_client_bswap ${CLIENT_SRC_FILES})
-set_target_properties(motoman_industrial_robot_client_bswap PROPERTIES COMPILE_DEFINITIONS "BYTE_SWAPPING")
-target_link_libraries(motoman_industrial_robot_client_bswap
-  industrial_robot_client_bswap
-  industrial_utils)
-add_dependencies(motoman_industrial_robot_client_bswap ${catkin_EXPORTED_TARGETS})
-
-# Robot state node
-add_executable(motoman_robot_state_bswap
-  src/robot_state_node.cpp)
-target_link_libraries(motoman_robot_state_bswap
-  motoman_simple_message_bswap
-  motoman_industrial_robot_client_bswap
-  ${catkin_LIBRARIES})
-set_target_properties(motoman_robot_state_bswap
-  PROPERTIES OUTPUT_NAME robot_state_bswap
-  PREFIX "")
-
-# Motion streaming node
-add_executable(motoman_motion_streaming_interface_bswap
-  src/joint_streaming_node.cpp
-  src/joint_trajectory_streamer.cpp
-  src/motion_ctrl.cpp)
-target_link_libraries(motoman_motion_streaming_interface_bswap
-  motoman_simple_message_bswap
-  motoman_industrial_robot_client_bswap
-  ${catkin_LIBRARIES})
-set_target_properties(motoman_motion_streaming_interface_bswap
-  PROPERTIES OUTPUT_NAME motion_streaming_interface_bswap
-  PREFIX "")
-
-add_executable(${PROJECT_NAME}_joint_trajectory_action
-  src/industrial_robot_client/joint_trajectory_action.cpp
-  src/joint_trajectory_action_node.cpp)
-target_link_libraries(${PROJECT_NAME}_joint_trajectory_action
-  industrial_robot_client
-  motoman_industrial_robot_client
-  ${catkin_LIBRARIES})
-
-
-#############
-## Install ##
-#############
-
-# binaries
-install(TARGETS
-  ${PROJECT_NAME}_joint_trajectory_action
-  motoman_motion_streaming_interface
-  motoman_motion_streaming_interface_bswap
-  motoman_robot_state
-  motoman_robot_state_bswap
-
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-# libraries
-install(TARGETS
-  motoman_industrial_robot_client
-  motoman_industrial_robot_client_bswap
-  motoman_simple_message
-  motoman_simple_message_bswap
-
-  DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-)
-
-# headers
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-)
-
-# other files
-install(DIRECTORY
-    Inform
-    launch
-    MotoPlus
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
-
-
-#############
-## Testing ##
-#############
-
-if(CATKIN_ENABLE_TESTING)
-  find_package(roslint REQUIRED)
-  roslint_cpp()
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  # the following line skips the linter which checks for copyrights uncomment
+  # the line when a copyright and license is not present in all source files
+  # set(ament_cmake_copyright_FOUND TRUE) the following line skips cpplint (only
+  # works in a git repo) uncomment the line when this package is not in a git
+  # repo set(ament_cmake_cpplint_FOUND TRUE)
+  ament_lint_auto_find_test_dependencies()
 endif()
+
+ament_export_include_directories(include)
+ament_export_interfaces(export_${PROJECT_NAME})
+ament_export_libraries(motoman_simple_message)
+
+ament_package()
